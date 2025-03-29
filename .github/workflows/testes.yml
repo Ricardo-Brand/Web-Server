@@ -5,11 +5,9 @@ on:
     branches:
       - main
 
-env:
-  GITHUB_REGISTRY: ghcr.io
-
 jobs:
   format:
+    name: clang-format
     runs-on: ubuntu-latest
     steps:
       - name: Verificar formatação com clang-format
