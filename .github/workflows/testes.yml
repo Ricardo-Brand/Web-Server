@@ -12,5 +12,7 @@ jobs:
       fail-fast: true
     name: clang-format
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Verificar formatação com clang-format
         run: clang-format -n --ferror-limit=1 -Werror --fail-on-incomplete-format ./src/**/*.c
