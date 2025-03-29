@@ -17,7 +17,5 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install clang-format
-        run: sudo apt install clang-format -yq
       - name: Verificar formatação com clang-format
         run: clang-format -n --ferror-limit=1 -Werror ./src/*.c
