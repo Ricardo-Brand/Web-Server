@@ -1,6 +1,6 @@
 .PHONY: all exec clean format build create-dir 
 
-all: clean build exec
+all: format clean build exec
 
 create-dir: ./build
 	mkdir build
@@ -15,4 +15,4 @@ clean:
 	rm -rf ./build
 
 format: 
-	clang-format -i ./src/**/*.c
+	clang-format -i ./src/*.c
