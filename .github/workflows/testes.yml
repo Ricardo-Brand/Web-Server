@@ -1,0 +1,16 @@
+name: Testes
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GITHUB_REGISTRY: ghcr.io
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar formatação com clang-format
+        run: clang-format -n --ferror-limit=1 -Werror --fail-on-incomplete-format ./src/**/*.c
