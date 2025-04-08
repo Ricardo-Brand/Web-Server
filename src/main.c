@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #define PORT 8080
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 65536
 
 int main(int argc, char *argv[]) {
     int meu_socket, client_fd;
@@ -70,29 +70,33 @@ int main(int argc, char *argv[]) {
         printf("Requisição recebida:\n%s\n", buffer);
 
         char metodo[8], caminho_requisitado[512], protocolo[16];
+        char response[BUFFER_SIZE];
         sscanf(buffer, "%s %s %s", metodo, caminho_requisitado, protocolo);
 
+        if (strstr(caminho_requisitado, "/../") != NULL ||
+            strncmp(caminho_requisitado, "../", 3) == 0 ||
+            strstr(caminho_requisitado, "/..") ==
+                    (caminho_requisitado + strlen(caminho_requisitado) - 3
+                    )) { // verifica apenas se está tentando um diretório pai
+
+            snprintf(
+                    response, sizeof(response),
+                    "HTTP/1.0 404 Not Found\r\n"
+                    "Content-Type: text/html\r\n\r\n"
+                    "<h1>404 - Arquivo nao encontrado</h1>"
+            );
+
+            write(client_fd, response, strlen(response));
+            close(client_fd);
+            continue;
+        }
         char caminho[1024];
         const char *pasta_base = "./public";
         snprintf(caminho, sizeof(caminho), "%s%s", pasta_base, caminho_requisitado);
 
-        if (strstr(caminho_requisitado, "..") !=
-            NULL) { // verifica se no caminho até o arquivo não tem nenhum ' .. '
-            char response[BUFFER_SIZE];
-            snprintf(
-                    response, sizeof(response),
-                    "HTTP/1.0 404 Not Found\r\n"
-                    "Content-Type: text/html\r\n\r\n"
-                    "<h1>404 - Arquivo nao encontrado</h1>"
-            );
-            write(client_fd, response, strlen(response));
-            close(client_fd);
-            continue;
-        }
-
         struct stat file_stat;
-        if (stat(caminho, &file_stat) == -1) { // verificar o caminho é válido
-            char response[BUFFER_SIZE];
+        if (stat(caminho, &file_stat) == -1) { // verifica se o caminho é válido
+
             snprintf(
                     response, sizeof(response),
                     "HTTP/1.0 404 Not Found\r\n"
@@ -104,11 +108,11 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        if (S_ISDIR(file_stat.st_mode)) { // Se for diretório, adiciona index.html
+        if (S_ISDIR(file_stat.st_mode)) { // Testa se é um diretório, caso seja um diretório, irá procurar por padrão "index.html"
             strncat(caminho, "/index.html", sizeof(caminho) - strlen(caminho) - 1);
             if (stat(caminho, &file_stat) ==
                 -1) { // verifica se index.html existe naquele diretório
-                char response[BUFFER_SIZE];
+
                 snprintf(
                         response, sizeof(response),
                         "HTTP/1.0 404 Not Found\r\n"
@@ -121,9 +125,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        FILE *fp = fopen(caminho, "rb"); // executa o arquivo em binário
-        if (!fp) {
-            char response[BUFFER_SIZE];
+        FILE *fp = fopen(caminho, "rb"); // abre o arquivo em binário
+        if (!fp) { // verifica se esse arquivo pode foi aberto
             snprintf(
                     response, sizeof(response),
                     "HTTP/1.0 500 Internal Server Error\r\n"
@@ -135,11 +138,6 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        char conteudo[BUFFER_SIZE];
-        int lidos = fread(conteudo, 1, sizeof(conteudo) - 1, fp);
-        conteudo[lidos] = '\0';
-        fclose(fp);
-
         const char *content_type = "text/plain";
         if (strstr(caminho, ".html"))
             content_type = "text/html";
@@ -148,17 +146,24 @@ int main(int argc, char *argv[]) {
         else if (strstr(caminho, ".js"))
             content_type = "application/javascript";
 
-        char response[BUFFER_SIZE];
+        long tamanho_arquivo = file_stat.st_size;
         snprintf(
                 response, sizeof(response),
                 "HTTP/1.0 200 OK\r\n"
                 "Content-Type: %s\r\n"
-                "Content-Length: %d\r\n\r\n",
-                content_type, lidos
+                "Content-Length: %ld\r\n\r\n",
+                content_type, tamanho_arquivo
         );
-
         write(client_fd, response, strlen(response));
-        write(client_fd, conteudo, lidos);
+
+        size_t lidos;
+        while ((lidos = fread(buffer, 1, sizeof(buffer), fp)) > 0) {  // irá fazer a leitura do arquivo inteiro, do inicio ao fim, independente de tamanho
+            if (write(client_fd, buffer, lidos) != lidos) {
+                perror("Erro ao enviar dados");
+                break;
+            }
+        }
+        fclose(fp);
 
         close(client_fd);
     }
