@@ -108,7 +108,8 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        if (S_ISDIR(file_stat.st_mode)) { // Testa se é um diretório, caso seja um diretório, irá procurar por padrão "index.html"
+        if (S_ISDIR(file_stat.st_mode
+            )) { // Testa se é um diretório, caso seja um diretório, irá procurar por padrão "index.html"
             strncat(caminho, "/index.html", sizeof(caminho) - strlen(caminho) - 1);
             if (stat(caminho, &file_stat) ==
                 -1) { // verifica se index.html existe naquele diretório
@@ -157,7 +158,8 @@ int main(int argc, char *argv[]) {
         write(client_fd, response, strlen(response));
 
         size_t lidos;
-        while ((lidos = fread(buffer, 1, sizeof(buffer), fp)) > 0) {  // irá fazer a leitura do arquivo inteiro, do inicio ao fim, independente de tamanho
+        while ((lidos = fread(buffer, 1, sizeof(buffer), fp)) > 0
+        ) { // irá fazer a leitura do arquivo inteiro, do inicio ao fim, independente de tamanho
             if (write(client_fd, buffer, lidos) != lidos) {
                 perror("Erro ao enviar dados");
                 break;
