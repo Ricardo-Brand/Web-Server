@@ -173,7 +173,3 @@ int main(int argc, char *argv[]) {
     close(meu_socket);
     return 0;
 }
-// caso o GET seja apenas ' / ' , mostra o arquivo da pasta public/index.html
-// caso seja GET /site , deve mostrar o arquivo public/site/index.html
-// caso seja GET /recursos , como não existe index.html nessa pasta, deve retornar '404 not found''
-// caso seja um arquivo, deve retornar o arquivo
