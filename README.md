@@ -47,7 +47,7 @@ O objetivo principal é entender conceitos de comunicação de rede de baixo ní
 **1 - Clone o repositório:**
 
 ```http
-git clone https://github.com/Ricardo-Brand/Web-Server.git
+git clone git@github.com:Ricardo-Brand/Web-Server.git
 ```
 
 **2 - Entre na pasta:**
